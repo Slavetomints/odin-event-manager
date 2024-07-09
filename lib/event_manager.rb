@@ -43,6 +43,25 @@ def save_thank_you_letter(id,form_letter)
   end
 end
 
+def find_average_time(array)
+  i = 0
+  array.each { |time| i += time }
+  puts 'The average time is ' + (i / array.length).to_s + ':00'
+end
+
+def find_average_day(array)
+  counts = Hash.new(0)
+
+  array.each do |date|
+    counts[date] += 1
+  end
+
+  max_count = counts.values.max
+  most_frequent_dates = counts.select { |date, count| count == max_count }.keys
+
+  puts "The average day of registration is #{most_frequent_dates.join(', ')}"
+end
+
 puts 'EventManager initialized.'
 
 contents = CSV.open(
@@ -53,6 +72,8 @@ contents = CSV.open(
 
 template_letter = File.read('form_letter.erb')
 erb_template = ERB.new template_letter
+registration_times = []
+registration_dates = []
 
 contents.each do |row|
   id = row[0]
@@ -60,8 +81,13 @@ contents.each do |row|
   zipcode = clean_zipcode(row[:zipcode])
   phone_number = clean_phone_number(row[:homephone])
   legislators = legislators_by_zipcode(zipcode)
+  registration_times << Time.strptime(row[:regdate], "%D %R").strftime('%H:%M:%S').to_i
+  registration_dates << Time.strptime(row[:regdate], "%D %R").strftime('%A')
 
   form_letter = erb_template.result(binding)
 
   save_thank_you_letter(id,form_letter)
 end
+
+find_average_time(registration_times)
+find_average_day(registration_dates)
